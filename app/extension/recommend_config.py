@@ -12,15 +12,19 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
 
     def post(self):
         nodes_info = self.get_nodes_from_request()
-        ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
-        service_type = nodes_info["serviceType"]
-        nodes = nodes_info["nodes"]
         storage_list = nodes_info["storages"]
         self.classify_disks(storage_list)
-        extend_pg_all = len(nodes) * len(self.ceph_data_storage) * 100
-        all_pgs = self.get_deploy_history_pgs() + extend_pg_all
-        data = self.calculate_ceph_storage(len(nodes), service_type,
-                                           ceph_copy_num_default, all_pgs)
+
+        if self.ceph_data_storage:
+            ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
+            service_type = nodes_info["serviceType"]
+            nodes = nodes_info["nodes"]
+            extend_pg_all = len(nodes) * len(self.ceph_data_storage) * 100
+            all_pgs = self.get_deploy_history_pgs() + extend_pg_all
+            data = self.calculate_ceph_storage(len(nodes), service_type, ceph_copy_num_default, all_pgs)
+
+        if self.local_storage:
+            data['localSizeMax'] = self.calculate_local_storage()
 
         return types.DataModel().model(code=0, data=data)
 
@@ -31,7 +35,7 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
             ceph_datas_num = 0
             for node in datas_json['nodes']:
                 for storage in node['storages']:
-                    if storage['purpose'] == 'DATA':
+                    if storage['purpose'] == 'CEPH_DATA':
                         ceph_datas_num += 1
             return ceph_datas_num * 100
         except Exception as e:
@@ -44,15 +48,19 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
 class ExtendShowRecommendConfig(ExtendReckRecommendConfigCommon):
     def post(self):
         nodes_info = self.get_nodes_from_request()
-        ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
-        service_type = nodes_info["serviceType"]
         nodes = nodes_info["nodes"]
         for node in nodes:
             self.classify_disks(node['storages'])
 
-        extend_pg_all = len(self.ceph_data_storage) * 100
-        all_pgs = self.get_deploy_history_pgs() + extend_pg_all
-        data = self.calculate_ceph_storage(
-            1, service_type, ceph_copy_num_default, all_pgs)
+        if self.ceph_data_storage:
+            ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
+            service_type = nodes_info["serviceType"]
+            extend_pg_all = len(self.ceph_data_storage) * 100
+            all_pgs = self.get_deploy_history_pgs() + extend_pg_all
+            data = self.calculate_ceph_storage(
+                1, service_type, ceph_copy_num_default, all_pgs)
+        
+        if self.local_storage:
+            data['localSizeMax'] = self.calculate_local_storage()
 
         return types.DataModel().model(code=0, data=data)

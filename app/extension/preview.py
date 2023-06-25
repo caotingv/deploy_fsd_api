@@ -42,11 +42,11 @@ class ExtendPreview(Preview):
 
     def build_extend_request(self, deploy_preview, extend_preview):
         try:
-            deploy_common_preview = deploy_preview['common']['commonFixed']
-            extend_common_preview = extend_preview['common']['commonFixed']
-            deploy_common_preview['blockStorageSize'] += extend_common_preview['blockStorageSize']
-            deploy_common_preview['shareDiskSize'] += extend_common_preview['shareDiskSize']
-            deploy_common_preview['voiResourceSize'] += extend_common_preview['voiResourceSize']
+            # deploy_common_preview = deploy_preview['common']['commonFixed']
+            # extend_common_preview = extend_preview['common']['commonFixed']
+            # deploy_common_preview['blockStorageSize'] += extend_common_preview['blockStorageSize']
+            # deploy_common_preview['shareDiskSize'] += extend_common_preview['shareDiskSize']
+            # deploy_common_preview['voiResourceSize'] += extend_common_preview['voiResourceSize']
             deploy_preview['nodes'].extend(extend_preview['nodes'])
             return deploy_preview
         except Exception as e:
