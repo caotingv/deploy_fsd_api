@@ -47,51 +47,31 @@ class NetCheck(Resource, Node):
         storage_public_result = []
 
         if 'management' in node:
-            status = 2 if int(node['management']['speed']) < 1000 else 0
-            result = {
-                'sourceIp': node['management']['ip'],
-                'sourceHostname': node['hostname'],
-                'destIp': node['management']['ip'],
-                'destHostname': node['hostname'],
-                'speed': node['management']['speed'],
-                'realSpeed': '-',
-                'mtu': node['management']['mtu'],
-                'plr': '-',
-                'status': status
-            }
-            api_result.append(result)
-
+            self._extracted_from_single_node_data_8(node, 'management', 1000, api_result)
         if 'storage_cluster' in node:
-            status = 2 if int(node['storage_cluster']['speed']) < 10000 else 0
-            result = {
-                'sourceIp': node['storage_cluster']['ip'],
-                'sourceHostname': node['hostname'],
-                'destIp': node['storage_cluster']['ip'],
-                'destHostname': node['hostname'],
-                'speed': node['storage_cluster']['speed'],
-                'realSpeed': '-',
-                'mtu': node['storage_cluster']['mtu'],
-                'plr': '-',
-                'status': status
-            }
-            storage_cluster_result.append(result)
-
+            self._extracted_from_single_node_data_8(
+                node, 'storage_cluster', 10000, storage_cluster_result
+            )
         if 'storage_public' in node:
-            status = 2 if int(node['storage_public']['speed']) < 10000 else 0
-            result = {
-                'sourceIp': node['storage_public']['ip'],
-                'sourceHostname': node['hostname'],
-                'destIp': node['storage_public']['ip'],
-                'destHostname': node['hostname'],
-                'speed': node['storage_public']['speed'],
-                'realSpeed': '-',
-                'mtu': node['storage_public']['mtu'],
-                'plr': '-',
-                'status': status
-            }
-            storage_public_result.append(result)
-
+            self._extracted_from_single_node_data_8(
+                node, 'storage_public', 10000, storage_public_result
+            )
         return self.combine_results(api_result, storage_cluster_result, storage_public_result)
+
+    def _extracted_from_single_node_data_8(self, node, arg1, arg2, arg3):
+        status = 2 if int(node[arg1]['speed']) < arg2 else 0
+        result = {
+            'sourceIp': node[arg1]['ip'],
+            'sourceHostname': node['hostname'],
+            'destIp': node[arg1]['ip'],
+            'destHostname': node['hostname'],
+            'speed': node[arg1]['speed'],
+            'realSpeed': '-',
+            'mtu': node[arg1]['mtu'],
+            'plr': '-',
+            'status': status,
+        }
+        arg3.append(result)
 
     # 多节点
     def multiple_nodes_data(self):
@@ -116,10 +96,12 @@ class NetCheck(Resource, Node):
                 if i == j:
                     api_result.append(
                         self.output_format_same_node(node, 'management'))
-                    ceph_cluster_result.append(
-                        self.output_format_same_node(node, 'storage_cluster'))
-                    ceph_public_result.append(
-                        self.output_format_same_node(node, 'storage_public'))
+                    if 'storage_cluster' in node:
+                        ceph_cluster_result.append(
+                            self.output_format_same_node(node, 'storage_cluster'))
+                    if 'storage_public' in node:
+                        ceph_public_result.append(
+                            self.output_format_same_node(node, 'storage_public'))
                 else:
                     # prepare iperf3 server
                     for port in [5201, 5202, 5203]:
@@ -127,10 +109,13 @@ class NetCheck(Resource, Node):
 
                     api_result.extend(output_format(
                         current_node, node, node['management']['ip'], 5201, 'management'))
-                    ceph_cluster_result.extend(output_format(
-                        current_node, node, node['storage_cluster']['ip'], 5202, 'storage_cluster'))
-                    ceph_public_result.extend(output_format(
-                        current_node, node, node['storage_public']['ip'], 5203, 'storage_public'))
+                    if 'storage_cluster' in node:
+                        ceph_cluster_result.extend(output_format(
+                            current_node, node, node['storage_cluster']['ip'], 5202, 'storage_cluster'))
+                    if 'storage_public' in node:
+                        ceph_public_result.extend(output_format(
+                            current_node, node, node['storage_public']['ip'], 5203, 'storage_public'))
+
 
         return self.combine_results(api_result, ceph_cluster_result, ceph_public_result)
 
@@ -185,19 +170,17 @@ class NetCheck(Resource, Node):
         plr = '0%'
         status = self._get_status(speed, real_speed, plr, source_ip, purpose)
 
-        result = {
+        return {
             'sourceIp': source_ip,
-            'sourceHostname': source_hostname,
+            'sourceHostname': dest_hostname,
             'destIp': dest_ip,
             'destHostname': dest_hostname,
             'speed': speed,
             'realSpeed': real_speed,
             'mtu': mtu,
-            'packetLossRate': plr,
-            'status': status
+            'plr': plr,
+            'status': status,
         }
-
-        return result
 
     # 处理 iperf 返回的数据
     def output_format_different_node(self, result, purpose):
@@ -282,6 +265,11 @@ class NetCheck(Resource, Node):
         return client_result, server_result
 
     def combine_results(self, api_result, ceph_cluster_result, ceph_public_result):
+        if ceph_cluster_result == [] and ceph_public_result == []:
+             return {
+            'apiResult': api_result
+        }
+
         return {
             'apiResult': api_result,
             'cephClusterResult': ceph_cluster_result,
@@ -303,10 +291,14 @@ class NetCheck(Resource, Node):
     def _get_node_property(self, node_ip):
         for node in self.node_list:
             for key in ['management', 'storage_cluster', 'storage_public']:
-                if node[key]['ip'] == node_ip:
-                    return node['hostname'], node[key]['speed'], node[key]['mtu']
+                if key in node and 'ip' in node[key] and node[key]['ip'] == node_ip:
+                    hostname = node['hostname']
+                    speed = node[key].get('speed')
+                    mtu = node[key].get('mtu')
+                    return hostname, speed, mtu
 
-        return None, 0, 0
+        # If no matching node or key is found
+        return None, None, None
 
     def _get_realSpeed(self, bits_per_second):
         return round(bits_per_second / 1000000 / 8, 2)
