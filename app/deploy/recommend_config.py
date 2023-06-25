@@ -40,10 +40,6 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         storage_list = nodes_info.get('storages', [])
         self.classify_disks(storage_list)
 
-        if self.should_calculate_only_voi(service_type):
-            data = {'storageSizeMax': self.calculate_local_storage()}
-            return types.DataModel().model(code=0, data=data)
-
         data = {} 
         if ceph_service_flag:
             if len(nodes) == 1 and len(self.ceph_data_storage) == 1:
@@ -127,10 +123,6 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
         nodes = nodes_info["nodes"]
         for node in nodes:
             self.classify_disks(node['storages'])
-
-        if self.should_calculate_only_voi(service_type):
-            data = {'localSizeMax': self.calculate_local_storage()}
-            return types.DataModel().model(code=0, data=data)
 
         data = {} 
         if ceph_service_flag:
