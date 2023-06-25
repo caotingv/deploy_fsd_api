@@ -28,6 +28,6 @@ class DeployHistory(Resource):
                 endtime=history_data[7]
             )
         else:
-            results = []
+            results = None
             
         return results
