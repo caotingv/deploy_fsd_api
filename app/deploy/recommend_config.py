@@ -65,9 +65,6 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
             elif purpose == 'SYSTEM':
                 self.sys_storage = storage
 
-    def should_calculate_only_voi(self, service_type):
-        return len(service_type) == 1 and service_type[0] == "VOI"
-
     def calculate_ceph_storage(self, node_num, service_type, ceph_copy_num_default, pg_all):
         volume_pgp = 0.45
         cephfs_pgp = 0.45
