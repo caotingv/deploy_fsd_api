@@ -102,6 +102,7 @@ enable_single_net: false
 single_net_bridge_name: br0
 vpair_tap_name: klcloud-br
 vtap_name: klcloud-vpc
+system_device: /dev/sda
 
 #############
 # local 配置
@@ -118,8 +119,8 @@ ceph_rbd_secret_uuid: e2338e01-6f82-4236-885b-056847028c77
 ceph_rbd_admin_user: client.admin
 hugepages_size: 2M
 enable_hugepages: "{% if only_deploy_voi | bool %}false{% else %}true{% endif %}"
-libvirt_tag: 2.0.3
-guest_service_tag: 2.0.3
+libvirt_tag: 3.0.0
+guest_service_tag: 3.0.0
 coredump_img_file_path: /opt/coredump
 coredump_libvirt_path: /opt/coredump_file
 coredump_block_size: 1024M
@@ -210,7 +211,7 @@ trochilus_internal_agent_listen_port: 19002
 trochilus_base_path: "{{ desktop_mount_dir }}"
 trochilus_voi_base_path: "{{ desktop_mount_dir }}/voi"
 trochilus_vdi_base_path: "{{ desktop_mount_dir }}/local_disks"
-trochilus_tag: 2.0.3
+trochilus_tag: 3.0.0
 virt_v2v_tag: latest
 # 如果vdi盒子和管理网不在同一个网段，就填管理网网关ip。如果vdi盒子和管理网在同一个网段，就啥也不填
 trochilus_detected_mgmt_net_ip: ""
@@ -245,7 +246,7 @@ fsd_external_main_port: 9010
 fsd_internal_main_port: 19010
 fsd_ssd_port: 22222
 fsd_webhook_token: abc123
-fsd_default_tag: 2.0.3
+fsd_default_tag: 3.0.0
 fsd_console_tag: latest
 fsd_deploy_mode: all
 fsd_deploy_node_type: '{% if groups["fsd"] | length > 1 %}cluster{% else %}single{% endif %}'
@@ -264,6 +265,8 @@ fsd_voi_version: edu
 tdesktop_path_name: 
   - /opt/offline/UOS_X86-TDesktop.deb
   - /opt/offline/Win-TDesktop.exe
+  - /opt/offline/kylin_ARM-TDesktop.deb
+  - /opt/offline/UOS_ARM-TDesktop.deb
 
 ##################
 # Samba
@@ -284,7 +287,7 @@ bt_download_external_port_end: 6889
 bt_download_internal_port_end: 16889
 btserver_external_listen_ports: "{{ bt_download_external_port_start }}-{{ bt_download_external_port_end }}"
 btserver_internal_listen_ports: "{{ bt_download_internal_port_start }}-{{ bt_download_internal_port_end }}"
-btserver_tag: 2.0.3
+btserver_tag: 3.0.0
 
 ###################
 # glusterfs 
@@ -296,8 +299,7 @@ share_metadata_path: "{{ gluster_metadata_path }}/share_data"
 seafile_mariadb_password: "60738ab7c0ba6413a7bc2304c756d328"
 seafile_port: 8000
 seafile_fileserver_port: 8082
-seafile_username: admin
-seafile_flavor: 50
+seafile_flavor: 1
 seafile_admin_pass: "Troila"
 seafile_admin_e: "admin@seafile.local"
 seafile_default_tag: "latest"

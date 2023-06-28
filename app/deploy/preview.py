@@ -56,6 +56,7 @@ class Preview(Resource, DeployPreview):
         global_var_data['enable_local'] = commonFixed.get('localServiceFlag', False)
         global_var_data['only_deploy_voi'] = False
         global_var_data['seafile_flavor'] = commonFixed['seafileFlavor']
+        global_var_data['system_device'] = self.get_system_device(previews['nodes'][0]['storages']) 
 
         service_type = previews['serviceType']
         if len(service_type) == 1 and service_type[0] == 'VOI':
@@ -245,3 +246,9 @@ class Preview(Resource, DeployPreview):
                 storage_data['local_volume_data'].append(disk_name)
 
         return storage_data
+
+    def get_system_device(self, storages):
+        for disk in storages:
+            if disk['purpose'] == 'SYSTEM':
+                return '/dev/' + disk['name']
+        return ''

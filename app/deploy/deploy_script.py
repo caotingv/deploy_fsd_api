@@ -48,7 +48,7 @@ class DeployScript(Preview, Node):
                 current_app.config['ETC_EXAMPLE_PATH'], config['shellName'])
             with open(file_path, 'w', encoding='UTF-8') as f:
                 f.write(config['shellContent'])
-        # self.control_deploy(preview_info)
+        self.control_deploy(preview_info)
         return types.DataModel().model(code=0, data="")
 
     def control_deploy(self, previews):
