@@ -106,7 +106,7 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
             return f'{str(local_data_sum )}GB'
         
         sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
-        return f'{str(round(sys_storage_size - 200, 2))}GB'
+        return f'{str(round(sys_storage_size - 210, 2))}GB'
 
 
 # 个性化pg计算
@@ -147,4 +147,4 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
             return node_local_info
 
         sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
-        return f'{str(round(sys_storage_size - 200, 2))}GB'
+        return f'{str(round(sys_storage_size - 210, 2))}GB'
