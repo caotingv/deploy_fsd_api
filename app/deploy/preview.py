@@ -166,7 +166,7 @@ class Preview(Resource, DeployPreview):
         bcache = False
         for node in nodes:
             for storage in node['storages']:
-                if storage['purpose'] == 'CACHE':
+                if storage['purpose'] == 'CEPH_CACHE':
                     bcache = True
                     break
         return bcache
