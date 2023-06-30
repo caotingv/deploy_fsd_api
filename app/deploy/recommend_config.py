@@ -1,3 +1,5 @@
+import json
+import subprocess
 from common import types, utils
 from deploy.node_base import Node
 from flask_restful import reqparse, Resource
@@ -105,9 +107,25 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
                 storage['size']) for storage in self.local_storage)
             return f'{str(local_data_sum )}GB'
         
-        sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
-        return f'{str(round(sys_storage_size - 210, 2))}GB'
+        return self.get_system_disk_free_size()
 
+    def get_system_disk_free_size(self):
+        root_size = utils.storage_type_format(self.get_root_mountpoint_size())
+        sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
+
+        return f'{str(round(sys_storage_size - root_size - 10, 2))}GB'
+    
+    def get_root_mountpoint_size(self):
+        command = ['lsblk', '--output', 'SIZE,MOUNTPOINT', '--json', '--paths']
+        output = subprocess.check_output(command).decode('utf-8')
+        parsed_output = json.loads(output)
+
+        devices = parsed_output['blockdevices']
+        for device in devices:
+            if device.get('mountpoint') == '/':
+                return device['size']
+            
+        return '200G'
 
 # 个性化pg计算
 class ShowRecommendConfig(ReckRecommendConfigCommon):
@@ -135,16 +153,11 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
         return types.DataModel().model(code=0, data=data)
 
     def calculate_node_local_storage(self, nodes):
+        node_local_info = []
         if self.local_storage:
-            node_local_info = []
             for node in nodes:
-                local_size = 0
-                for storage in node['storages']:
-                    if storage['purpose'] == 'LOCAL_DATA':
-                            local_size =  local_size + utils.storage_type_format(storage['size'])
-
-                node_local_info.append(f'{local_size}GB' )
-            return node_local_info
-
-        sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
-        return f'{str(round(sys_storage_size - 210, 2))}GB'
+                local_size = sum(utils.storage_type_format(storage['size']) for storage in node['storages'] if storage['purpose'] == 'LOCAL_DATA')
+                node_local_info.append(f'{local_size}GB')
+        else:
+            node_local_info.append(self.get_system_disk_free_size())
+        return node_local_info
