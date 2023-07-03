@@ -69,7 +69,7 @@ class DeployScript(Preview, Node):
         self._create_status_table()
         cmd = [
             'sh',
-            current_app.config['SCRIPT_PATH'] + '/setup.sh',
+            current_app.config['ETC_EXAMPLE_PATH'].joinpath('/setup.sh'),
             deploy_key,
             deploy_type,
             str(ceph_flag),

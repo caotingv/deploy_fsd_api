@@ -39,7 +39,7 @@ class Preview(Resource, DeployPreview):
         file_list = ["ceph-globals.yaml", "global_vars.yaml", "hosts"]
         global_vars_data = []
         for file in file_list:
-            with open(current_app.config['ETC_EXAMPLE_PATH'] + file, 'r') as f:
+            with open(current_app.config['ETC_EXAMPLE_PATH'].joinpath(file)) as f:
                 global_vars_data.append({'shellName': file,
                                          'shellContent': f.read()})
 
@@ -49,7 +49,7 @@ class Preview(Resource, DeployPreview):
         # 生成 global_vars.yaml 文件预览
         commonFixed = previews['common']['commonFixed']
         commonCustom = previews['common']['commonCustom']
-        global_var_data = utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'] + '/global_vars.yaml')
+        global_var_data = utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'].joinpath('global_vars.yaml'))
         global_var_data['external_vip_address'] = commonFixed['apiVip']
         global_var_data['internal_vip_address'] = f"169.168.{commonFixed['apiVip'].split('.', 2)[-1]}"
         global_var_data['enable_ceph'] = commonFixed.get('cephServiceFlag', False)
@@ -136,7 +136,7 @@ class Preview(Resource, DeployPreview):
         host_var_dict = {'shellName': 'hosts', 'shellContent': host_file_print}
 
         if commonFixed.get('cephServiceFlag', False):
-            ceph_global_var_data = utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'] + '/ceph-globals.yaml')
+            ceph_global_var_data =  utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'].joinpath('ceph-globals.yaml'))
             ceph_global_var_data['ceph_public_network'] = commonFixed['cephPublic']
             ceph_global_var_data['ceph_cluster_network'] = commonFixed['cephCluster']
             ceph_global_var_data['osd_pool_default_size'] = commonCustom['commonCustomCeph']['cephCopyNumDefault']
@@ -157,7 +157,7 @@ class Preview(Resource, DeployPreview):
         return [global_var_dict, host_var_dict]
 
     def host_conversion(self, nodes):
-        host_template_path = current_app.config['TEMPLATE_PATH'] + '/hosts.j2'
+        host_template_path =(current_app.config['TEMPLATE_PATH'].joinpath('hosts.j2'))
         with open(host_template_path, 'r', encoding='UTF-8') as f:
             data = f.read()
         return Template(data).render(nodes)
