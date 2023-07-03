@@ -301,5 +301,5 @@ seafile_port: 8000
 seafile_fileserver_port: 8082
 seafile_flavor: 1
 seafile_admin_pass: "Troila"
-seafile_admin_e: "admin@seafile.local"
+seafile_admin_e: "admin"
 seafile_default_tag: "latest"
