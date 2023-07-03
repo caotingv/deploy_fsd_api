@@ -47,8 +47,7 @@ class Extension(DeployScript, ExtendPreview):
 
         self._write_history_file(results)
         upgrade_path = self._get_upgrade_path()
-        cmd = ['sh', current_app.config['SCRIPT_PATH'] +
-               '/extension.sh', str(ceph_flag), str(upgrade_path)]
+        cmd = ['sh', (current_app.config['SCRIPT_PATH'].joinpath('extension.sh')), str(ceph_flag), str(upgrade_path)]
         self._logger.info('extension command: %s', cmd)
         results = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         thread = Thread(target=self._shell_return_listen, args=(
