@@ -67,15 +67,24 @@ function deploy() {
 
 function webhook_all_process() {
   #所有流程
-  sqlite3 /root/deploy/kly-deploy.db <<EOF
-    DELETE FROM deploy_process_status;
-    DELETE FROM deploy_now_status;
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测扩容脚本");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备扩容环境");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 2, "扩容文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "扩容虚拟化系统");
+  if [ "$deploy_ceph_flag" = "True" ]; then
+    sqlite3 /root/deploy/kly-deploy.db <<EOF
+      DELETE FROM deploy_process_status;
+      DELETE FROM deploy_now_status;
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测扩容脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备扩容环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_ceph", "", "true", 2, "扩容文件系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "扩容虚拟化系统");
 EOF
-
+  else
+    sqlite3 /root/deploy/kly-deploy.db <<EOF
+      DELETE FROM deploy_process_status;
+      DELETE FROM deploy_now_status;
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测扩容脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备扩容环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "扩容虚拟化系统");
+EOF
+  fi
   #补发前1步
   webhook_process "check_param" "成功" true 0 "检测扩容脚本"
 }

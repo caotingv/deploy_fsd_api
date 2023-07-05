@@ -126,38 +126,37 @@ function deploy() {
   fi
 }
 
-#webhook上报所有流程并补发第1步（首次）
 function webhook_all_process_first() {
-  #所有流程
-sqlite3 /root/deploy/kly-deploy.db <<EOF
-    DELETE FROM deploy_process_status;
-    DELETE FROM deploy_now_status;
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备部署环境");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 2, "部署文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "部署虚拟化系统");
-EOF
+  sqlite3 /root/deploy/kly-deploy.db "DELETE FROM deploy_process_status; DELETE FROM deploy_now_status;"
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('check_param', '', 'true', 0, '检测部署脚本');"
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('ready_environment', '', 'true', 1, '准备部署环境');"
+  
+  if [ "$deploy_ceph_flag" = "True" ]; then
+    sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('deploy_ceph', '', 'true', 2, '部署文件系统');"
+  fi
 
-  #补发前1步
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('deploy_trochilus', '', 'true', 3, '部署虚拟化系统');"
   webhook_process "check_param" "成功" true 0 "检测部署脚本"
   echo ""
 }
 
-#webhook上报所有流程并补发第1步（重试）
 function webhook_all_process_retry() {
-#所有流程
-sqlite3 /root/deploy/kly-deploy.db <<EOF
-    DELETE FROM deploy_process_status;
-    DELETE FROM deploy_now_status;
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_trochilus", "", "true", 1, "清除虚拟化系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_ceph", "", "true", 2, "清除文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 3, "准备部署环境");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_ceph", "", "true", 4, "部署文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 5, "部署虚拟化系统");
-EOF
+  sqlite3 /root/deploy/kly-deploy.db "DELETE FROM deploy_process_status; DELETE FROM deploy_now_status;"
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('check_param', '', 'true', 0, '检测部署脚本');"
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('clear_trochilus', '', 'true', 1, '清除虚拟化系统');"
 
-  #补发前1步
+  if [ "$deploy_ceph_flag" = "True" ]; then
+    sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('clear_ceph', '', 'true', 2, '清除文件系统');"
+  fi
+
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('ready_environment', '', 'true', 3, '准备部署环境');"
+
+  if [ "$deploy_ceph_flag" = "True" ]; then
+    sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('deploy_ceph', '', 'true', 4, '部署文件系统');"
+  fi
+
+  sqlite3 /root/deploy/kly-deploy.db "INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ('deploy_trochilus', '', 'true', 5, '部署虚拟化系统');"
+
   webhook_process "check_param" "成功" true 0 "检测部署脚本"
   echo ""
 }
