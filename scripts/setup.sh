@@ -132,10 +132,16 @@ function webhook_all_process_first() {
 sqlite3 /root/deploy/kly-deploy.db <<EOF
     DELETE FROM deploy_process_status;
     DELETE FROM deploy_now_status;
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备部署环境");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 2, "部署文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "部署虚拟化系统");
+    if [ "$deploy_ceph_flag" = "True" ]; then
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备部署环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_ceph", "", "true", 2, "部署文件系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "部署虚拟化系统");
+    else
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 1, "准备部署环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 3, "部署虚拟化系统");
+    fi
 EOF
 
   #补发前1步
@@ -149,12 +155,19 @@ function webhook_all_process_retry() {
 sqlite3 /root/deploy/kly-deploy.db <<EOF
     DELETE FROM deploy_process_status;
     DELETE FROM deploy_now_status;
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_trochilus", "", "true", 1, "清除虚拟化系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_ceph", "", "true", 2, "清除文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 3, "准备部署环境");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_ceph", "", "true", 4, "部署文件系统");
-    INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 5, "部署虚拟化系统");
+    if [ "$deploy_ceph_flag" = "True" ]; then
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_trochilus", "", "true", 1, "清除虚拟化系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_ceph", "", "true", 2, "清除文件系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 3, "准备部署环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_ceph", "", "true", 4, "部署文件系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 5, "部署虚拟化系统");
+    else
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("check_param", "", "true", 0, "检测部署脚本");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("clear_trochilus", "", "true", 1, "清除虚拟化系统");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("ready_environment", "", "true", 3, "准备部署环境");
+      INSERT INTO deploy_process_status(en, message, result, sort, zh) VALUES ("deploy_trochilus", "", "true", 5, "部署虚拟化系统");
+    fi
 EOF
 
   #补发前1步
