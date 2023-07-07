@@ -90,6 +90,11 @@ function deploy() {
       webhook_process "clear_ceph" "成功" "true" 2 "清除文件系统"
     fi
     #准备部署环境
+    ansible-playbook -i ${etc_example_path}/hosts -e @${etc_example_path}/global_vars.yaml ${ansible_path}/96-single-net.yml >> /var/log/deploy/deploy.log 2>&1
+    if ! [ "$(grep 'failed=' /var/log/deploy/deploy.log | awk '{print $6}' | awk -F '=' '{print $2}' | awk '$1 != 0')" = "" ] ; then
+      webhook_process "ready_environment" "准备部署环境失败" "false" 1 "准备部署环境"
+      exit 1
+    fi
     ansible-playbook -i ${etc_example_path}/hosts -e @${etc_example_path}/global_vars.yaml ${ansible_path}/94-internal_ip.yaml >> /var/log/deploy/deploy.log 2>&1
     if ! [ "$(grep 'failed=' /var/log/deploy/deploy.log | awk '{print $6}' | awk -F '=' '{print $2}' | awk '$1 != 0')" = "" ] ; then
       webhook_process "ready_environment" "准备部署环境失败" "false" 1 "准备部署环境"

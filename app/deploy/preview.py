@@ -57,19 +57,20 @@ class Preview(Resource, DeployPreview):
         global_var_data['only_deploy_voi'] = False
         global_var_data['seafile_flavor'] = commonFixed['seafileFlavor']
         global_var_data['system_device'] = self.get_system_device(previews['nodes'][0]['storages']) 
-
+    
         service_type = previews['serviceType']
         if len(service_type) == 1 and service_type[0] == 'VOI':
             fsd_deploy_mode = 'voi'
             global_var_data['only_deploy_voi'] = True
-            if len(previews['nodes'][0]['networkCards']) == 1:
-                global_var_data['enable_single_net'] = True
 
         elif len(service_type) == 1 and service_type[0] == 'VDI':
             fsd_deploy_mode = 'vdi'
         else:
             fsd_deploy_mode = 'all'
         
+        if len(previews['nodes'][0]['networkCards']) == 1:
+            global_var_data['enable_single_net'] = True
+            
         global_var_data['fsd_deploy_mode'] = fsd_deploy_mode 
 
         if previews['deployType'] == "COMM":
