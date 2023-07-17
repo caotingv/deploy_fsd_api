@@ -42,7 +42,7 @@ ipmi_username: root
 ipmi_password: Troila12#$
 host_username: root
 host_password: Troila12#$
-create_swap_file: true
+create_swap_file: "{% if enable_single_net | bool %}false{% else %}true{% endif %}"
 swap_file_path: /swapfile
 swap_file_block_size: 2M
 swap_file_true: 10240
@@ -123,7 +123,7 @@ libvirt_tag: 3.0.0
 guest_service_tag: 3.0.0
 coredump_img_file_path: /opt/coredump
 coredump_libvirt_path: /opt/coredump_file
-coredump_block_size: 1024M
+coredump_block_size: "{% if enable_single_net | bool %}1024K{% else %}1024M{% endif %}"
 coredump_count: 20
 coredump_loop_device_name: /dev/loop0
 
@@ -209,8 +209,8 @@ trochilus_internal_api_listen_port: 19001
 trochilus_external_agent_listen_port: 9002
 trochilus_internal_agent_listen_port: 19002
 trochilus_base_path: "{{ desktop_mount_dir }}"
-trochilus_voi_base_path: "{{ desktop_mount_dir }}/voi"
-trochilus_vdi_base_path: "{{ desktop_mount_dir }}/local_disks"
+trochilus_voi_base_path: "{{ desktop_mount_dir }}/voi/"
+trochilus_vdi_base_path: "{{ desktop_mount_dir }}/local_disks/"
 trochilus_tag: 3.0.0
 virt_v2v_tag: latest
 # 如果vdi盒子和管理网不在同一个网段，就填管理网网关ip。如果vdi盒子和管理网在同一个网段，就啥也不填
@@ -300,6 +300,6 @@ seafile_mariadb_password: "60738ab7c0ba6413a7bc2304c756d328"
 seafile_port: 8000
 seafile_fileserver_port: 8082
 seafile_flavor: 1
-seafile_admin_pass: "Troila"
-seafile_admin_e: "admin"
+seafile_admin_pass: "123456"
+seafile_admin_e: "super"
 seafile_default_tag: "latest"
