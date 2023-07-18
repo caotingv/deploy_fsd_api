@@ -1,5 +1,6 @@
 import json
 import subprocess
+
 from common import types, utils
 from deploy.node_base import Node
 from flask_restful import reqparse, Resource
@@ -43,16 +44,22 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         self.classify_disks(storage_list)
 
         data = {} 
+        node_num = len(nodes)
         if ceph_service_flag:
-            if len(nodes) == 1 and len(self.ceph_data_storage) == 1:
+            if node_num == 1 and len(self.ceph_data_storage) == 1:
                 ceph_copy_num_default = 1
             pg_all = len(nodes) * len(self.ceph_data_storage) * 100
             data = self.calculate_ceph_storage(
-                len(nodes), service_type, ceph_copy_num_default, pg_all)
+                node_num, service_type, ceph_copy_num_default, pg_all)
 
         if local_service_flag:
             data['localSizeMax'] = self.calculate_local_storage()
-
+        
+        if len(service_type) >= 2:
+            total_memory = nodes[0]['memTotal']
+            osd_num = len(self.ceph_data_storage) / node_num
+            data['memorySizeMax'] = self.calculate_memory_free_size(total_memory, osd_num)
+        
         return types.DataModel().model(code=0, data=data)
 
     def classify_disks(self, storage_list):
@@ -109,6 +116,20 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         
         return self.get_system_disk_free_size()
 
+    def calculate_memory_free_size(self, total_memory, osd_num):
+        if total_memory >= 65536:
+            available_memory = total_memory - 32768 - (osd_num * 2)
+        elif total_memory >= 32768:
+            available_memory = 16384
+        elif total_memory >= 16384:
+            available_memory = 8192
+        elif total_memory > 8192:
+            available_memory = 4096
+        else:
+            available_memory = 2048
+        
+        return f'{str(round(available_memory / 1024, 2))}GB'
+    
     def get_system_disk_free_size(self):
         root_size = utils.storage_type_format(self.get_root_mountpoint_size())
         sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
@@ -126,6 +147,7 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
                 return device['size']
             
         return '200G'
+
 
 # 个性化pg计算
 class ShowRecommendConfig(ReckRecommendConfigCommon):
@@ -150,6 +172,9 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
         if local_service_flag:
             data['localSizeMax'] = self.calculate_node_local_storage(nodes)
 
+        if len(service_type) >= 2:
+            data['memorySizeMax'] = self.get_node_memory_free_size(nodes)
+        
         return types.DataModel().model(code=0, data=data)
 
     def calculate_node_local_storage(self, nodes):
@@ -159,5 +184,20 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                 local_size = sum(utils.storage_type_format(storage['size']) for storage in node['storages'] if storage['purpose'] == 'LOCAL_DATA')
                 node_local_info.append(f'{local_size}GB')
         else:
-            node_local_info.append(self.get_system_disk_free_size())
+            for node in nodes:
+                node_local_info.append(self.get_system_disk_free_size())
         return node_local_info
+
+    def get_node_memory_free_size(self, nodes):
+        node_memory_free_info = []
+        for node in nodes:
+            total_memory = node['memTotal']
+            osd_num = 0
+            if self.ceph_data_storage:
+                for storage in node['storages']:
+                    if storage['purpose'] == 'CEPH_DATA':
+                        osd_num += 1
+
+            node_memory_free_info.append(self.calculate_memory_free_size(total_memory, osd_num))
+
+        return node_memory_free_info

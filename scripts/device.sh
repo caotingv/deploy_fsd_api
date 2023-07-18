@@ -33,11 +33,14 @@ function get_node_info() {
   projectName=`echo $ansible_json | jq ".ansible_facts.ansible_product_name" | xargs`
   projectVersion=`echo $ansible_json | jq ".ansible_facts.ansible_product_version" | xargs`
   nodeName=`echo $ansible_json | jq ".ansible_facts.ansible_hostname" | xargs`
+  memTotal=`echo $ansible_json | jq ".ansible_facts.ansible_memtotal_mb" | xargs`
+
   result_json=`echo $result_json | jq --arg v "$framework" '.framework=$v'`
   result_json=`echo $result_json | jq --arg v "$cpuNum" '.cpuNum=$v'`
   result_json=`echo $result_json | jq --arg v "$projectName" '.projectName=$v'`
   result_json=`echo $result_json | jq --arg v "$projectVersion" '.projectVersion=$v'`
   result_json=`echo $result_json | jq --arg v "$nodeName" '.nodeName=$v'`
+  result_json=`echo $result_json | jq --arg v "$memTotal" '.memTotal=$v'`
 }
 
 #3.获得网卡信息

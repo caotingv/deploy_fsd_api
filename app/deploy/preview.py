@@ -101,7 +101,8 @@ class Preview(Resource, DeployPreview):
             'voiResourceSize': "",
             'cephResourceSize': "",
             'shareDiskSize': "",
-            'isoResourceSize': ""
+            'isoResourceSize': "",
+            'voiReservedMemory': ""
         }
         nodes_info = []
 
@@ -109,11 +110,13 @@ class Preview(Resource, DeployPreview):
             host_vars1 = host_vars | {
                 'nodeIP': node['nodeIP'],
                 'nodeName': node['nodeName'],
+                'nodeType': node['nodeType'],
                 'vdiResourceSize': node.get('blockStorageSize', 0), 
                 'voiResourceSize': node.get('voiResourceSize', 0),
                 'cephResourceSize': node.get('cephResourceSize', 0),
                 'shareDiskSize': node.get('shareDiskSize', 0),
-                'isoResourceSize': node.get('isoResourceSize', 0)
+                'isoResourceSize': node.get('isoResourceSize', 0),
+                'voiReservedMemory': node.get('voiReservedMemory', 0)
             }
             card_info = self._netcard_classify_build(node['networkCards'])
             storage_info = self._storage_classify_build(node['storages'])
@@ -127,8 +130,7 @@ class Preview(Resource, DeployPreview):
                 'vlanManagementDict': card_info['vlan_cards'],
                 'cephVolumeData': storage_info['ceph_volume_data'],
                 'cephVolumeCacheData': storage_info['ceph_volume_cache_data'],
-                'localVolumeData': storage_info['local_volume_data'],
-                'nodeType': node['nodeType']
+                'localVolumeData': storage_info['local_volume_data']
             }
 
             nodes_info.append(host_vars1)
