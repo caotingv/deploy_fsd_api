@@ -1,6 +1,6 @@
 [allnodes]
 {% for node in nodes %}
-{{ node.nodeIP }} ansible_ssh_extra_args='-o StrictHostKeyChecking=no' hostname={{ node.nodeName }} api_interface={{ node.managementCard }} ceph_public_interface={{ node.storagePublicCard }} ceph_cluster_interface={{ node.storageClusterCard }} flat_network_interface="{{ node.flatManagementList }}" vlan_network_interface="{{ node.vlanManagementDict }}" ceph_volume_data="{{ node.cephVolumeData }}" bcache_map_list="{{ node.cephVolumeCacheData }}" nic_info="{{ node.nicInfo }}"
+{{ node.nodeIP }} ansible_ssh_extra_args='-o StrictHostKeyChecking=no' hostname={{ node.nodeName }} api_interface={{ node.managementCard }} ceph_public_interface={{ node.storagePublicCard }} ceph_cluster_interface={{ node.storageClusterCard }} flat_network_interface="{{ node.flatManagementList }}" vlan_network_interface="{{ node.vlanManagementDict }}" ceph_volume_data="{{ node.cephVolumeData }}" bcache_map_list="{{ node.cephVolumeCacheData }}" nic_info="{{ node.nicInfo }}" external_manage_ip="{{ node.nodeIP }}"
 {% endfor %}
 
 [control]
