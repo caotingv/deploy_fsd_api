@@ -14,13 +14,13 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
         nodes_info = self.get_nodes_from_request()
         ceph_service_flag = nodes_info['cephServiceFlag']
         local_service_flag = nodes_info['localServiceFlag']
+        service_type = nodes_info["serviceType"]
         storage_list = nodes_info["storages"]
         self.classify_disks(storage_list)
 
         data = {}
         if ceph_service_flag:
             ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
-            service_type = nodes_info["serviceType"]
             nodes = nodes_info["nodes"]
             extend_pg_all = len(nodes) * len(self.ceph_data_storage) * 100
             all_pgs = self.get_deploy_history_pgs() + extend_pg_all
@@ -31,6 +31,12 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
                 data['localSizeMax'] = self.calculate_local_storage()
             else:
                 data['localSizeMax'] = '0GB'
+
+        if len(service_type) >= 2:
+            nodes = nodes_info["nodes"]
+            total_memory = nodes[0]['memTotal']
+            osd_num = len(self.ceph_data_storage) / len(nodes)
+            data['memorySizeMax'] = self.calculate_memory_free_size(total_memory, osd_num)
 
         return types.DataModel().model(code=0, data=data)
 
@@ -52,13 +58,14 @@ class ExtendShowRecommendConfig(ExtendReckRecommendConfigCommon, ShowRecommendCo
         ceph_service_flag = nodes_info['cephServiceFlag']
         local_service_flag = nodes_info['localServiceFlag']
         nodes = nodes_info["nodes"]
+        service_type = nodes_info["serviceType"]
+        
         for node in nodes:
             self.classify_disks(node['storages'])
 
         data = {}
         if ceph_service_flag:
             ceph_copy_num_default = nodes_info["cephCopyNumDefault"]
-            service_type = nodes_info["serviceType"]
             extend_pg_all = len(self.ceph_data_storage) * 100
             all_pgs = self.get_deploy_history_pgs() + extend_pg_all
             data = self.calculate_ceph_storage(
@@ -70,4 +77,7 @@ class ExtendShowRecommendConfig(ExtendReckRecommendConfigCommon, ShowRecommendCo
             else:
                 data['localSizeMax'] = '0GB'
 
+        if len(service_type) >= 2:
+            data['memorySizeMax'] = self.get_node_memory_free_size(nodes)
+        
         return types.DataModel().model(code=0, data=data)
