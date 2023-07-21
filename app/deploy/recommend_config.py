@@ -118,7 +118,10 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
 
     def calculate_memory_free_size(self, total_memory, osd_num):
         if total_memory >= 65536:
-            available_memory = total_memory - 32768 - (osd_num * 2)
+            if osd_num == 0:
+                available_memory = total_memory - 32768
+            else:
+                available_memory = total_memory - 32768 - ((osd_num + 2) * 2048)
         elif total_memory >= 32768:
             available_memory = 16384
         elif total_memory >= 16384:
