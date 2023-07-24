@@ -27,10 +27,9 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
             data = self.calculate_ceph_storage(len(nodes), service_type, ceph_copy_num_default, all_pgs)
         
         if local_service_flag:
-            if self.local_storage:
-                data['localSizeMax'] = self.calculate_local_storage()
-            else:
-                data['localSizeMax'] = '0GB'
+            local_storage_data = self.calculate_local_storage()
+            data['shareSizeMax'] = local_storage_data['share_size_max']
+            data['localSizeMax'] = local_storage_data['local_size_max']
 
         if len(service_type) >= 2:
             nodes = nodes_info["nodes"]
@@ -72,10 +71,9 @@ class ExtendShowRecommendConfig(ExtendReckRecommendConfigCommon, ShowRecommendCo
                 1, service_type, ceph_copy_num_default, all_pgs)
         
         if local_service_flag:
-            if self.local_storage:
-                data['localSizeMax'] = self.calculate_node_local_storage(nodes)
-            else:
-                data['localSizeMax'] = '0GB'
+            local_storage_data = self.calculate_node_local_storage(nodes)
+            data['shareSizeMax'] = local_storage_data['share_size_max']
+            data['localSizeMax'] = local_storage_data['local_size_max']
 
         if len(service_type) >= 2:
             data['memorySizeMax'] = self.get_node_memory_free_size(nodes)

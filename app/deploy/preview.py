@@ -96,6 +96,7 @@ class Preview(Resource, DeployPreview):
             'cephVolumeData': [],
             'cephVolumeCacheData': [],
             'localVolumeData': [],
+            'shareVolumeData': [],
             'nodeType': [],
             'vdiResourceSize': "",
             'voiResourceSize': "",
@@ -130,7 +131,8 @@ class Preview(Resource, DeployPreview):
                 'vlanManagementDict': card_info['vlan_cards'],
                 'cephVolumeData': storage_info['ceph_volume_data'],
                 'cephVolumeCacheData': storage_info['ceph_volume_cache_data'],
-                'localVolumeData': storage_info['local_volume_data']
+                'localVolumeData': storage_info['local_volume_data'],
+                'shareVolumeData': storage_info['share_volume_data'],
             }
 
             nodes_info.append(host_vars1)
@@ -233,7 +235,8 @@ class Preview(Resource, DeployPreview):
         storage_data = {
             'ceph_volume_data': [],
             'ceph_volume_cache_data': [],
-            'local_volume_data': []
+            'local_volume_data': [],
+            'share_volume_data': []
         }
 
         for storage in storages:
@@ -247,6 +250,10 @@ class Preview(Resource, DeployPreview):
                 storage_data['ceph_volume_data'].append(disk_name)
             elif purpose == 'LOCAL_DATA':
                 storage_data['local_volume_data'].append(disk_name)
+            elif purpose == 'LOCAL_SHARE_DATA':
+                storage_data['local_volume_data'].append(disk_name)
+            elif purpose == 'SHARE_DATA':
+                storage_data['share_volume_data'].append(disk_name)
 
         return storage_data
 

@@ -10,16 +10,20 @@ class DeployCount(Node):
     def get_nodes_from_request(self):
         parser = reqparse.RequestParser()
         fields = [
-            ('cephCopyNumDefault', int, True, 'The cephCopyNumDefault field does not exist'),
-            ('cephServiceFlag', bool, True, 'The cephServiceFlag field does not exist'),
-            ('localServiceFlag', bool, True, 'The localServiceFlag field does not exist'),
+            ('cephCopyNumDefault', int, True,
+             'The cephCopyNumDefault field does not exist'),
+            ('cephServiceFlag', bool, True,
+             'The cephServiceFlag field does not exist'),
+            ('localServiceFlag', bool, True,
+             'The localServiceFlag field does not exist'),
             ('nodes', list, True, 'The nodes field does not exist'),
             ('serviceType', list, True, 'The serviceType field does not exist'),
             ('storages', list, False, 'The storages field does not exist')
         ]
-        
+
         for field, field_type, required, error_msg in fields:
-            parser.add_argument(field, required=required, location='json', type=field_type, help=error_msg)
+            parser.add_argument(field, required=required,
+                                location='json', type=field_type, help=error_msg)
 
         return parser.parse_args()
 
@@ -30,6 +34,7 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         self.ceph_cache_storage = []
         self.ceph_data_storage = []
         self.local_storage = []
+        self.share_storage = []
         self.sys_storage = None
 
     def post(self):
@@ -43,7 +48,7 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         storage_list = nodes_info.get('storages', [])
         self.classify_disks(storage_list)
 
-        data = {} 
+        data = {}
         node_num = len(nodes)
         if ceph_service_flag:
             if node_num == 1 and len(self.ceph_data_storage) == 1:
@@ -53,13 +58,16 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
                 node_num, service_type, ceph_copy_num_default, pg_all)
 
         if local_service_flag:
-            data['localSizeMax'] = self.calculate_local_storage()
-        
+            local_storage_data = self.calculate_local_storage()
+            data['shareSizeMax'] = local_storage_data['share_size_max']
+            data['localSizeMax'] = local_storage_data['local_size_max']
+
         if len(service_type) >= 2:
             total_memory = nodes[0]['memTotal']
             osd_num = len(self.ceph_data_storage) / node_num
-            data['memorySizeMax'] = self.calculate_memory_free_size(total_memory, osd_num)
-        
+            data['memorySizeMax'] = self.calculate_memory_free_size(
+                total_memory, osd_num)
+
         return types.DataModel().model(code=0, data=data)
 
     def classify_disks(self, storage_list):
@@ -71,6 +79,10 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
                 self.ceph_data_storage.append(storage)
             elif purpose == 'LOCAL_DATA':
                 self.local_storage.append(storage)
+            elif purpose == 'LOCAL_SHARE_DATA':
+                self.local_storage.append(storage)
+            elif purpose == 'SHARE_DATA':
+                self.share_storage.append(storage)
             elif purpose == 'SYSTEM':
                 self.sys_storage = storage
 
@@ -109,19 +121,31 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         }
 
     def calculate_local_storage(self):
+        local_data_sum = 0
+        share_data_sum = 0
+
         if self.local_storage:
             local_data_sum = sum(utils.storage_type_format(
                 storage['size']) for storage in self.local_storage)
-            return f'{str(local_data_sum )}GB'
-        
-        return self.get_system_disk_free_size()
+
+        if self.share_storage:
+            share_data_sum = sum(utils.storage_type_format(
+                storage['size']) for storage in self.share_storage)
+
+        if local_data_sum == 0 and share_data_sum == 0:
+            local_data_sum = self.get_system_disk_free_size()
+
+        return {
+            'share_size_max': f'{share_data_sum}GB',
+            'local_size_max': f'{local_data_sum}GB',
+        }
 
     def calculate_memory_free_size(self, total_memory, osd_num):
+        reserves = 32768
+        osd_reserves = (osd_num + 2) * 2048 if osd_num > 0 else 0
+
         if total_memory >= 65536:
-            if osd_num == 0:
-                available_memory = total_memory - 32768
-            else:
-                available_memory = total_memory - 32768 - ((osd_num + 2) * 2048)
+            available_memory = total_memory - reserves - osd_reserves
         elif total_memory >= 32768:
             available_memory = 16384
         elif total_memory >= 16384:
@@ -130,15 +154,17 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
             available_memory = 4096
         else:
             available_memory = 2048
-        
-        return f'{str(round(available_memory / 1024, 2))}GB'
-    
+
+        available_memory_gb = round(available_memory / 1024, 2)
+
+        return f'{available_memory_gb}GB'
+
     def get_system_disk_free_size(self):
         root_size = utils.storage_type_format(self.get_root_mountpoint_size())
         sys_storage_size = utils.storage_type_format(self.sys_storage['size'])
 
-        return f'{str(round(sys_storage_size - root_size - 10, 2))}GB'
-    
+        return round(sys_storage_size - root_size - 10, 2)
+
     def get_root_mountpoint_size(self):
         command = ['lsblk', '--output', 'SIZE,MOUNTPOINT', '--json', '--paths']
         output = subprocess.check_output(command).decode('utf-8')
@@ -148,7 +174,7 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         for device in devices:
             if device.get('mountpoint') == '/':
                 return device['size']
-            
+
         return '200G'
 
 
@@ -164,7 +190,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
         for node in nodes:
             self.classify_disks(node['storages'])
 
-        data = {} 
+        data = {}
         if ceph_service_flag:
             if len(nodes) == 1 and len(self.ceph_data_storage) == 1:
                 ceph_copy_num_default = 1
@@ -173,23 +199,49 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                 len(nodes), service_type, ceph_copy_num_default, pg_all)
 
         if local_service_flag:
-            data['localSizeMax'] = self.calculate_node_local_storage(nodes)
+            local_storage_data = self.calculate_node_local_storage(nodes)
+            data['shareSizeMax'] = local_storage_data['share_size_max']
+            data['localSizeMax'] = local_storage_data['local_size_max']
 
         if len(service_type) >= 2:
             data['memorySizeMax'] = self.get_node_memory_free_size(nodes)
-        
+
         return types.DataModel().model(code=0, data=data)
 
     def calculate_node_local_storage(self, nodes):
-        node_local_info = []
+        local_data_sum = []
+        share_data_sum = []
+
+        local_size = 0
+        share_size = 0
+
         if self.local_storage:
             for node in nodes:
-                local_size = sum(utils.storage_type_format(storage['size']) for storage in node['storages'] if storage['purpose'] == 'LOCAL_DATA')
-                node_local_info.append(f'{local_size}GB')
-        else:
+                local_size = sum(
+                    utils.storage_type_format(storage['size'])
+                    for storage in node['storages']
+                    if storage['purpose'] == 'LOCAL_DATA' or storage['purpose'] == 'LOCAL_SHARE_DATA'
+                )
+                local_data_sum.append(f'{local_size}GB')
+
+        if self.share_storage:
             for node in nodes:
-                node_local_info.append(self.get_system_disk_free_size())
-        return node_local_info
+                share_size = sum(
+                    utils.storage_type_format(storage['size'])
+                    for storage in node['storages']
+                    if storage['purpose'] == 'SHARE_DATA')
+
+                share_data_sum.append(f'{share_size}GB')
+
+        if local_data_sum == [] and share_data_sum == []:
+            for node in nodes:
+                local_data_sum.append(self.get_system_disk_free_size())
+                share_data_sum.append('0GB')
+
+        return {
+            'share_size_max': share_data_sum,
+            'local_size_max': local_data_sum
+        }
 
     def get_node_memory_free_size(self, nodes):
         node_memory_free_info = []
@@ -201,6 +253,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                     if storage['purpose'] == 'CEPH_DATA':
                         osd_num += 1
 
-            node_memory_free_info.append(self.calculate_memory_free_size(total_memory, osd_num))
+            node_memory_free_info.append(
+                self.calculate_memory_free_size(total_memory, osd_num))
 
         return node_memory_free_info
