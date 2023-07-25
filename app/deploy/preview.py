@@ -46,18 +46,53 @@ class Preview(Resource, DeployPreview):
         return types.DataModel().model(code=0, data=global_vars_data)
 
     def file_conversion(self, previews):
-        # 生成 global_vars.yaml 文件预览
         commonFixed = previews['common']['commonFixed']
         commonCustom = previews['common']['commonCustom']
-        global_var_data = utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'].joinpath('global_vars.yaml'))
+
+        file_contents = self.generate_file_content(
+            previews, commonFixed, commonCustom)
+        
+        return file_contents
+
+    def generate_file_content(self, previews, commonFixed, commonCustom):
+        global_var_data = self.generate_global_vars_data(previews, commonFixed)
+        host_vars = self.generate_hosts_data(previews)
+        ceph_global_var_data = self.generate_ceph_globals_data(
+            previews, commonFixed, commonCustom)
+
+        global_var = yaml.dump(global_var_data, sort_keys=False, width=1200)
+        global_var_dict = {'shellName': 'global_vars.yaml',
+                           'shellContent': global_var}
+
+        host_file_print = self.host_conversion({'nodes': host_vars})
+        host_var_dict = {'shellName': 'hosts', 'shellContent': host_file_print}
+
+        if ceph_global_var_data:
+            ceph_global_var = yaml.dump(ceph_global_var_data, sort_keys=False)
+            ceph_global_var_dict = {
+                'shellName': 'ceph-globals.yaml', 'shellContent': ceph_global_var}
+            return [global_var_dict, host_var_dict, ceph_global_var_dict]
+
+        return [global_var_dict, host_var_dict]
+
+    def generate_global_vars_data(self, previews, commonFixed):
+        global_var_data = utils.yaml_to_dict(
+            current_app.config['TEMPLATE_PATH'].joinpath('global_vars.yaml'))
         global_var_data['external_vip_address'] = commonFixed['apiVip']
-        global_var_data['internal_vip_address'] = f"169.168.{commonFixed['apiVip'].split('.', 2)[-1]}"
-        global_var_data['enable_ceph'] = commonFixed.get('cephServiceFlag', False)
-        global_var_data['enable_local'] = commonFixed.get('localServiceFlag', False)
+        global_var_data = utils.yaml_to_dict(
+            current_app.config['TEMPLATE_PATH'].joinpath('global_vars.yaml'))
+        global_var_data['external_vip_address'] = commonFixed['apiVip']
+        global_var_data[
+            'internal_vip_address'] = f"169.168.{commonFixed['apiVip'].split('.', 2)[-1]}"
+        global_var_data['enable_ceph'] = commonFixed.get(
+            'cephServiceFlag', False)
+        global_var_data['enable_local'] = commonFixed.get(
+            'localServiceFlag', False)
         global_var_data['only_deploy_voi'] = False
         global_var_data['seafile_flavor'] = commonFixed['seafileFlavor']
-        global_var_data['system_device'] = self.get_system_device(previews['nodes'][0]['storages']) 
-    
+        global_var_data['system_device'] = self.get_system_device(
+            previews['nodes'][0]['storages'])
+
         service_type = previews['serviceType']
         if len(service_type) == 1 and service_type[0] == 'VOI':
             fsd_deploy_mode = 'voi'
@@ -67,11 +102,11 @@ class Preview(Resource, DeployPreview):
             fsd_deploy_mode = 'vdi'
         else:
             fsd_deploy_mode = 'all'
-        
+
         if len(previews['nodes'][0]['networkCards']) == 1:
             global_var_data['enable_single_net'] = True
-            
-        global_var_data['fsd_deploy_mode'] = fsd_deploy_mode 
+
+        global_var_data['fsd_deploy_mode'] = fsd_deploy_mode
 
         if previews['deployType'] == "COMM":
             global_var_data['deploy_comm'] = True
@@ -79,50 +114,35 @@ class Preview(Resource, DeployPreview):
         elif previews['deployType'] == "EASYEDU":
             global_var_data['deploy_comm'] = False
             global_var_data['deploy_edu'] = True
-    
-        global_var = yaml.dump(global_var_data, sort_keys=False, width=1200)
-        global_var_dict = {'shellName': 'global_vars.yaml', 'shellContent': global_var}
 
-        # 生成 hosts 文件预览
-        host_vars = {
-            'nodeIP': "",
-            'nodeName': "",
-            'managementCard': "",
-            'storagePublicCard': "",
-            'storageClusterCard': "",
-            'nicInfo': [],
-            'flatManagementList': [],
-            'vlanManagementDict': {},
-            'cephVolumeData': [],
-            'cephVolumeCacheData': [],
-            'localVolumeData': [],
-            'shareVolumeData': [],
-            'nodeType': [],
-            'vdiResourceSize': "",
-            'voiResourceSize': "",
-            'cephResourceSize': "",
-            'shareDiskSize': "",
-            'isoResourceSize': "",
-            'voiReservedMemory': ""
-        }
+        return global_var_data
+
+    def generate_hosts_data(self, previews):
         nodes_info = []
+        share_disk_size = float('inf')
+        iso_resource_size = float('inf')
+        voi_resource_size = float('inf')
 
         for node in previews['nodes']:
-            host_vars1 = host_vars | {
+            node_data = {
                 'nodeIP': node['nodeIP'],
                 'nodeName': node['nodeName'],
                 'nodeType': node['nodeType'],
-                'vdiResourceSize': node.get('blockStorageSize', 0), 
+                'vdiResourceSize': node.get('blockStorageSize', 0),
                 'voiResourceSize': node.get('voiResourceSize', 0),
                 'cephResourceSize': node.get('cephResourceSize', 0),
                 'shareDiskSize': node.get('shareDiskSize', 0),
                 'isoResourceSize': node.get('isoResourceSize', 0),
                 'voiReservedMemory': node.get('voiReservedMemory', 0)
             }
+
+            share_disk_size = min(share_disk_size, node_data['shareDiskSize'])
+            iso_resource_size = min(iso_resource_size, node_data['isoResourceSize'])
+            voi_resource_size = min(voi_resource_size, node_data['voiResourceSize'])
+
             card_info = self._netcard_classify_build(node['networkCards'])
             storage_info = self._storage_classify_build(node['storages'])
-
-            host_vars1 |= {
+            node_data.update({
                 'managementCard': card_info['management'],
                 'storagePublicCard': card_info['storagePublic'],
                 'storageClusterCard': card_info['storageCluster'],
@@ -133,48 +153,44 @@ class Preview(Resource, DeployPreview):
                 'cephVolumeCacheData': storage_info['ceph_volume_cache_data'],
                 'localVolumeData': storage_info['local_volume_data'],
                 'shareVolumeData': storage_info['share_volume_data'],
-            }
+            })
+            
+            for node_data in nodes_info:
+                node_data['shareDiskSize'] = share_disk_size
+                node_data['voiResourceSize'] = voi_resource_size
+                node_data['isoResourceSize'] = iso_resource_size
 
-            nodes_info.append(host_vars1)
+            nodes_info.append(node_data)
 
-        host_file_print = self.host_conversion({'nodes': nodes_info})
-        host_var_dict = {'shellName': 'hosts', 'shellContent': host_file_print}
+        return nodes_info
 
-        if commonFixed.get('cephServiceFlag', False):
-            ceph_global_var_data =  utils.yaml_to_dict(current_app.config['TEMPLATE_PATH'].joinpath('ceph-globals.yaml'))
-            ceph_global_var_data['ceph_public_network'] = commonFixed['cephPublic']
-            ceph_global_var_data['ceph_cluster_network'] = commonFixed['cephCluster']
-            ceph_global_var_data['osd_pool_default_size'] = commonCustom['commonCustomCeph']['cephCopyNumDefault']
-            commonCustomPool = commonCustom['commonCustomPool']
-            ceph_global_var_data['images_pool_pg_num'] = commonCustomPool['imagePoolPgNum']
-            ceph_global_var_data['images_pool_pgp_num'] = commonCustomPool['imagePoolPgpNum']
-            ceph_global_var_data['volumes_poll_pg_num'] = commonCustomPool['volumePoolPgNum']
-            ceph_global_var_data['volumes_poll_pgp_num'] = commonCustomPool['volumePoolPgpNum']
-            ceph_global_var_data['cephfs_pool_default_pg_num'] = commonCustomPool['cephfsPoolPgNum']
-            ceph_global_var_data['cephfs_pool_default_pgp_num'] = commonCustomPool['cephfsPoolPgpNum']
-            ceph_global_var_data['ceph_aio'] = len(previews['nodes']) == 1
-            ceph_global_var_data['bcache'] = self._bcache_bool(previews['nodes'])
-            ceph_global_var = yaml.dump(ceph_global_var_data, sort_keys=False)
-            ceph_global_var_dict = {'shellName': 'ceph-globals.yaml', 'shellContent': ceph_global_var}
+    def generate_ceph_globals_data(self, previews, commonFixed, commonCustom):
+        if not commonFixed.get('cephServiceFlag', False):
+            return None
 
-            return [global_var_dict, ceph_global_var_dict, host_var_dict]
+        ceph_global_var_data = utils.yaml_to_dict(
+            current_app.config['TEMPLATE_PATH'].joinpath('ceph-globals.yaml'))
+        ceph_global_var_data['ceph_public_network'] = commonFixed['cephPublic']
+        ceph_global_var_data['ceph_cluster_network'] = commonFixed['cephCluster']
+        ceph_global_var_data['osd_pool_default_size'] = commonCustom['commonCustomCeph']['cephCopyNumDefault']
+        commonCustomPool = commonCustom['commonCustomPool']
+        ceph_global_var_data['images_pool_pg_num'] = commonCustomPool['imagePoolPgNum']
+        ceph_global_var_data['images_pool_pgp_num'] = commonCustomPool['imagePoolPgpNum']
+        ceph_global_var_data['volumes_poll_pg_num'] = commonCustomPool['volumePoolPgNum']
+        ceph_global_var_data['volumes_poll_pgp_num'] = commonCustomPool['volumePoolPgpNum']
+        ceph_global_var_data['cephfs_pool_default_pg_num'] = commonCustomPool['cephfsPoolPgNum']
+        ceph_global_var_data['cephfs_pool_default_pgp_num'] = commonCustomPool['cephfsPoolPgpNum']
+        ceph_global_var_data['ceph_aio'] = len(previews['nodes']) == 1
+        ceph_global_var_data['bcache'] = self._bcache_bool(previews['nodes'])
 
-        return [global_var_dict, host_var_dict]
+        return ceph_global_var_data
 
     def host_conversion(self, nodes):
-        host_template_path =(current_app.config['TEMPLATE_PATH'].joinpath('hosts.j2'))
+        host_template_path = (
+            current_app.config['TEMPLATE_PATH'].joinpath('hosts.j2'))
         with open(host_template_path, 'r', encoding='UTF-8') as f:
             data = f.read()
         return Template(data).render(nodes)
-
-    def _bcache_bool(self, nodes):
-        bcache = False
-        for node in nodes:
-            for storage in node['storages']:
-                if storage['purpose'] == 'CEPH_CACHE':
-                    bcache = True
-                    break
-        return bcache
 
     def _netcard_classify_build(self, cards):
         card_info = {
@@ -245,7 +261,8 @@ class Preview(Resource, DeployPreview):
 
             if purpose == 'CEPH_CACHE':
                 cache2data = [f'/dev/{item}' for item in storage['cache2data']]
-                storage_data['ceph_volume_cache_data'].append({'cache': disk_name, 'data': ' '.join(cache2data)})
+                storage_data['ceph_volume_cache_data'].append(
+                    {'cache': disk_name, 'data': ' '.join(cache2data)})
             elif purpose == 'CEPH_DATA':
                 storage_data['ceph_volume_data'].append(disk_name)
             elif purpose == 'LOCAL_DATA':
@@ -256,7 +273,16 @@ class Preview(Resource, DeployPreview):
                 storage_data['share_volume_data'].append(disk_name)
 
         return storage_data
-
+    
+    def _bcache_bool(self, nodes):
+        bcache = False
+        for node in nodes:
+            for storage in node['storages']:
+                if storage['purpose'] == 'CEPH_CACHE':
+                    bcache = True
+                    break
+        return bcache
+    
     def get_system_device(self, storages):
         for disk in storages:
             if disk['purpose'] == 'SYSTEM':
