@@ -223,6 +223,9 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                     if storage['purpose'] == 'LOCAL_DATA' or storage['purpose'] == 'LOCAL_SHARE_DATA'
                 )
                 local_data_sum.append(f'{local_size}GB')
+        else:
+            for node in nodes:
+                local_data_sum.append('0GB')
 
         if self.share_storage:
             for node in nodes:
@@ -232,8 +235,11 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                     if storage['purpose'] == 'SHARE_DATA')
 
                 share_data_sum.append(f'{share_size}GB')
+        else:
+            for node in nodes:
+                share_data_sum.append('0GB')
 
-        if local_data_sum == [] and share_data_sum == []:
+        if self.local_storage == [] and self.share_storage == []:
             for node in nodes:
                 local_data_sum.append(self.get_system_disk_free_size())
                 share_data_sum.append('0GB')

@@ -124,7 +124,6 @@ class Preview(Resource, DeployPreview):
         iso_resource_size = float('inf')
         voi_resource_size = float('inf')
 
-
         for node in previews['nodes']:
             node_data = {
                 'nodeIP': node['nodeIP'],
