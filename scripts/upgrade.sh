@@ -22,10 +22,10 @@ function check_param() {
 function deploy_scripts_upgrade() {
   now_data=`date +%s`
   mv ${deploy_path}/kly-deploy ${deploy_path}/kly-deploy_${now_data}
-  cp -r ${upgrade_path}/kly-deploy ${deploy_path}/kly-deploy
+  cp -r ${upgrade_path}/kly-deploy ${deploy_path}/
 
-  mv ${deploy_path}/kly-deploy_${now_data}/etc_example ${deploy_path}/kly-deploy/etc_example
-  mv ${upgrade_path}/kly-deploy/etc_example/upgrade-globals.yaml ${deploy_path}/kly-deploy/etc_example/
+  \cp -rf ${deploy_path}/kly-deploy_${now_data}/etc_example ${deploy_path}/kly-deploy/
+  \cp -rf ${upgrade_path}/kly-deploy/etc_example/upgrade-globals.yaml ${deploy_path}/kly-deploy/etc_example/
 }
 
 # Service upgrade
@@ -49,16 +49,16 @@ function deploy_upgrade_program() {
     exit 1
   fi
 
-  # check_service_port
-  # ports=(9000 9001 9002 9003 9010 9090 9093)
-  # for port in "${ports[@]}"
-  # do
-  #   if ! netstat -an | grep -w "$port" >/dev/null
-  #   then
-  #     process "check_service_status" "Port $port is not in use" false 3 "check_service_status"
-  #     exit 1
-  #   fi
-  # done
+  check_service_port
+  ports=(9000 9001 9002 9003 9010 9090 9093)
+  for port in "${ports[@]}"
+  do
+    if ! netstat -an | grep -w "$port" >/dev/null
+    then
+      process "check_service_status" "Port $port is not in use" false 3 "check_service_status"
+      exit 1
+    fi
+  done
   process "check_service_status" "" true 3 "check_service_status"
   deploy_scripts_upgrade
   exit 0
@@ -83,6 +83,4 @@ function process() {
 }
 
 check_param
-# all_process
-process "unzip_upgrade_package" "" true 0 "解压升级包成功"
 deploy_upgrade_program
