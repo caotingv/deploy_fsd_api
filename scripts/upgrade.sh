@@ -18,38 +18,14 @@ function check_param() {
   fi
 }
 
-# Deployment Platform upgrade
-function deploy_platform_upgrade() {
-  mv ${deploy_path}/kly-deploy-api ${deploy_path}/kly-deploy-api_$(date +%s)
-  cp -r ${upgrade_path}/kly-deploy-api ${deploy_path}/kly-deploy-api
-  if [ -d "${deploy_path}/kly-deploy-api" ]; then
-    systemctl daemon-reload && systemctl restart kly-deploy-api
-    status=$(systemctl is-active kly-deploy-api)
-    if [[ ! "$status" == "active" ]]; then
-       process "deploy_upgrade_program" "执行升级程序失败" false 2 "执行升级程序"
-       exit 1
-    fi
-  else
-    process "deploy_upgrade_program" "执行升级程序失败" false 2 "执行升级程序"
-    exit 1
-  fi
-}
+# Deployment Scripts upgrade
+function deploy_scripts_upgrade() {
+  now_data=`date +%s`
+  mv ${deploy_path}/kly-deploy ${deploy_path}/kly-deploy_${now_data}
+  cp -r ${upgrade_path}/kly-deploy ${deploy_path}/kly-deploy
 
-# Deploying front-end upgrade
-function deploy_front_upgrade(){
-  mv /var/www/html /var/www/html_$(date +%s)
-  cp -r ${upgrade_path}/html /var/www/
-  if [ -d "${upgrade_path}/html" ]; then
-    systemctl restart httpd
-    status=$(systemctl is-active httpd)
-    if [[ ! "$status" == "active" ]]; then
-       process "deploy_upgrade_program" "执行升级程序失败" false 2 "执行升级程序"
-       exit 1
-    fi
-  else
-    process "deploy_upgrade_program" "执行升级程序失败" false 2 "执行升级程序"
-    exit 1
-  fi
+  mv ${deploy_path}/kly-deploy_${now_data}/etc_example ${deploy_path}/kly-deploy/etc_example
+  mv ${upgrade_path}/kly-deploy/etc_example/upgrade-globals.yaml ${deploy_path}/kly-deploy/etc_example/
 }
 
 # Service upgrade
@@ -74,16 +50,17 @@ function deploy_upgrade_program() {
   fi
 
   # check_service_port
-  ports=(9000 9001 9002 9003 9010 9090 9093)
-  for port in "${ports[@]}"
-  do
-    if ! netstat -an | grep -w "$port" >/dev/null
-    then
-      process "check_service_status" "Port $port is not in use" false 3 "check_service_status"
-      exit 1
-    fi
-  done
+  # ports=(9000 9001 9002 9003 9010 9090 9093)
+  # for port in "${ports[@]}"
+  # do
+  #   if ! netstat -an | grep -w "$port" >/dev/null
+  #   then
+  #     process "check_service_status" "Port $port is not in use" false 3 "check_service_status"
+  #     exit 1
+  #   fi
+  # done
   process "check_service_status" "" true 3 "check_service_status"
+  deploy_scripts_upgrade
   exit 0
 }
 
