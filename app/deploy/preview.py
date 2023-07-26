@@ -57,6 +57,7 @@ class Preview(Resource, DeployPreview):
     def generate_file_content(self, previews, commonFixed, commonCustom):
         global_var_data = self.generate_global_vars_data(previews, commonFixed)
         host_vars = self.generate_hosts_data(previews)
+
         ceph_global_var_data = self.generate_ceph_globals_data(
             previews, commonFixed, commonCustom)
 
@@ -123,6 +124,7 @@ class Preview(Resource, DeployPreview):
         iso_resource_size = float('inf')
         voi_resource_size = float('inf')
 
+
         for node in previews['nodes']:
             node_data = {
                 'nodeIP': node['nodeIP'],
@@ -154,13 +156,12 @@ class Preview(Resource, DeployPreview):
                 'localVolumeData': storage_info['local_volume_data'],
                 'shareVolumeData': storage_info['share_volume_data'],
             })
-            
+
+            nodes_info.append(node_data)
             for node_data in nodes_info:
                 node_data['shareDiskSize'] = share_disk_size
                 node_data['voiResourceSize'] = voi_resource_size
                 node_data['isoResourceSize'] = iso_resource_size
-
-            nodes_info.append(node_data)
 
         return nodes_info
 
