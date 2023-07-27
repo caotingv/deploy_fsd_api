@@ -136,10 +136,10 @@ class Preview(Resource, DeployPreview):
                 'isoResourceSize': node.get('isoResourceSize', 0),
                 'voiReservedMemory': node.get('voiReservedMemory', 0)
             }
-
-            share_disk_size = min(share_disk_size, node_data['shareDiskSize'])
-            iso_resource_size = min(iso_resource_size, node_data['isoResourceSize'])
-            voi_resource_size = min(voi_resource_size, node_data['voiResourceSize'])
+            if 'CONTROL' in node['nodeType']:
+                share_disk_size = min(share_disk_size, node_data['shareDiskSize'])
+                iso_resource_size = min(iso_resource_size, node_data['isoResourceSize'])
+                voi_resource_size = min(voi_resource_size, node_data['voiResourceSize'])
 
             card_info = self._netcard_classify_build(node['networkCards'])
             storage_info = self._storage_classify_build(node['storages'])
@@ -158,9 +158,10 @@ class Preview(Resource, DeployPreview):
 
             nodes_info.append(node_data)
             for node_data in nodes_info:
-                node_data['shareDiskSize'] = share_disk_size
-                node_data['voiResourceSize'] = voi_resource_size
-                node_data['isoResourceSize'] = iso_resource_size
+                if 'CONTROL' in node_data['nodeType']:
+                    node_data['shareDiskSize'] = share_disk_size
+                    node_data['voiResourceSize'] = voi_resource_size
+                    node_data['isoResourceSize'] = iso_resource_size
 
         return nodes_info
 

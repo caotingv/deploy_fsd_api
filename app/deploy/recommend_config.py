@@ -144,13 +144,13 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
         reserves = 32768
         osd_reserves = (osd_num + 2) * 2048 if osd_num > 0 else 0
 
-        if total_memory >= 65536:
+        if total_memory >= 61440:
             available_memory = total_memory - reserves - osd_reserves
-        elif total_memory >= 32768:
+        elif total_memory >= 30720:
             available_memory = 16384
-        elif total_memory >= 16384:
+        elif total_memory >= 10240:
             available_memory = 8192
-        elif total_memory > 8192:
+        elif total_memory > 8000:
             available_memory = 4096
         else:
             available_memory = 2048

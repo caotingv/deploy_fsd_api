@@ -18,9 +18,9 @@ class ExtendPreview(Preview):
         return types.DataModel().model(code=0, data=config_file)
 
     def assembly_data(self):
-        preview_info = self.get_preview_from_request()
-        history_deploy_preview = self.get_deploy_preview_data()
-        return self.build_extend_request(history_deploy_preview, preview_info)
+        extend_preview = self.get_preview_from_request()
+        deploy_preview = self.get_deploy_preview_data()
+        return self.build_extend_request(deploy_preview, extend_preview)
 
     def get(self):
         file_list = ["ceph-globals.yaml", "global_vars.yaml", "hosts"]
@@ -42,11 +42,6 @@ class ExtendPreview(Preview):
 
     def build_extend_request(self, deploy_preview, extend_preview):
         try:
-            # deploy_common_preview = deploy_preview['common']['commonFixed']
-            # extend_common_preview = extend_preview['common']['commonFixed']
-            # deploy_common_preview['blockStorageSize'] += extend_common_preview['blockStorageSize']
-            # deploy_common_preview['shareDiskSize'] += extend_common_preview['shareDiskSize']
-            # deploy_common_preview['voiResourceSize'] += extend_common_preview['voiResourceSize']
             deploy_preview['nodes'].extend(extend_preview['nodes'])
             return deploy_preview
         except Exception as e:
