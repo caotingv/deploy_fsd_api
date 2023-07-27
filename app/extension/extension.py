@@ -52,9 +52,9 @@ class Extension(DeployScript, ExtendPreview):
                 str(ceph_flag), 
                 str(upgrade_path)]
         self._logger.info('extension command: %s', cmd)
-        results = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        subprocess_1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         thread = Thread(target=self._shell_return_listen, args=(
-            current_app._get_current_object(), results, previews,
+            current_app._get_current_object(), subprocess_1, previews,
             int(time.time() * 1000)))
         thread.start()
 
@@ -67,7 +67,7 @@ class Extension(DeployScript, ExtendPreview):
             deploy_message = status[0] if status else 'deploy failed.'
             deploy_result = status[1].lower() if status else 'false'
 
-            if deploy_result.lower() == 'true':
+            if deploy_result == 'true':
                 params_json = json.dumps(previews)
             else:
                 params_json = json.dumps(deploy_preview)

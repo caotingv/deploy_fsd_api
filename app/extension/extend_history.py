@@ -17,7 +17,7 @@ class ExtendHistory(Resource):
                 history_data[1],
                 history_data[2],
                 history_data[3],
-                history_data[4].lower() == 'true' if history_data[5] != '' else '',
+                history_data[4],
                 history_data[5],
                 history_data[6],
             )
