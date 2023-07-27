@@ -22,7 +22,7 @@ api_interface_address: '{{ "api" | filter_address }}'
 network_address_family: "ipv4"
 api_address_family: "{{ network_address_family }}"
 reserved_host_cpus: 2
-reserved_host_memory_mb: 16384
+reserved_host_memory_mb: 32768
 # 每个osd需要留2G内存
 ceph_reserved_host_memory_mb: 6
 cpu_allocation_ratio: 4
@@ -42,7 +42,7 @@ ipmi_username: root
 ipmi_password: Troila12#$
 host_username: root
 host_password: Troila12#$
-create_swap_file: "{% if enable_single_net | bool %}false{% else %}true{% endif %}"
+create_swap_file: false
 swap_file_path: /swapfile
 swap_file_block_size: 2M
 swap_file_true: 10240
@@ -90,7 +90,7 @@ enable_lvm: false
 enable_ceph: false
 # 本地存储
 enable_local: true
-enable_glusterfs: '{% if enable_local | bool and groups["glusterfs"] | length > 1 %}true{% else %}false{% endif %}'
+enable_glusterfs: '{% if enable_local | bool %}true{% else %}false{% endif %}'
 enable_seafile: '{% if deploy_edu | bool %}true{% else %}false{% endif %}'
 
 ##########
