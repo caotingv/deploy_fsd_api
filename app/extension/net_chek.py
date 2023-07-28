@@ -16,20 +16,22 @@ class ExtendNetCheck(NetCheck):
         self.node_list = self.get_info_with_from(self.nodes)
 
     def post(self):
-        data = self.multiple_nodes_data()
-        # 保存数据到本地
-        node_info_file = os.path.join(
-            self.deploy_home, "deploy_node_info.xlsx")
-        if os.path.isfile(node_info_file):
-            os.remove(node_info_file)
-        node_info_file = os.path.join(
-            self.deploy_home, "deploy_node_info.xlsx")
-        source_file = os.path.join(self.template_path, "deployExcel.xlsx")
-        try:
-            shutil.copyfile(source_file, node_info_file)
-            self.write_data_to_excel(node_info_file, data)
-        except Exception as e:
-            self._logger.error('write data to excel error, %s', e)
+        print(self.node_list)
+        data = ''
+        # data = self.multiple_nodes_data()
+        # # 保存数据到本地
+        # node_info_file = os.path.join(
+        #     self.deploy_home, "deploy_node_info.xlsx")
+        # if os.path.isfile(node_info_file):
+        #     os.remove(node_info_file)
+        # node_info_file = os.path.join(
+        #     self.deploy_home, "deploy_node_info.xlsx")
+        # source_file = os.path.join(self.template_path, "deployExcel.xlsx")
+        # try:
+        #     shutil.copyfile(source_file, node_info_file)
+        #     self.write_data_to_excel(node_info_file, data)
+        # except Exception as e:
+        #     self._logger.error('write data to excel error, %s', e)
 
         return types.DataModel().model(code=0, data=data)
 
