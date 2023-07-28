@@ -103,8 +103,9 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
             int(pg_all * cephfs_pgp / ceph_copy_num_default))
         ceph_data_sum = sum(utils.storage_type_format(
             storage['size']) for storage in self.ceph_data_storage)
+        
         ceph_max_size = f'{str(round(ceph_data_sum * 0.8 * node_num / ceph_copy_num_default, 2) )}GB'
-
+        
         return {
             "commonCustomCeph": {
                 "cephCopyNumDefault": ceph_copy_num_default
@@ -196,7 +197,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                 ceph_copy_num_default = 1
             pg_all = len(nodes) * len(self.ceph_data_storage) * 100
             data = self.calculate_ceph_storage(
-                len(nodes), service_type, ceph_copy_num_default, pg_all)
+                1, service_type, ceph_copy_num_default, pg_all)
 
         if local_service_flag:
             local_storage_data = self.calculate_node_local_storage(nodes)
