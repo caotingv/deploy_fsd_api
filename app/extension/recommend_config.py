@@ -25,7 +25,8 @@ class ExtendReckRecommendConfigCommon(ReckRecommendConfigCommon):
             extend_pg_all = len(nodes) * len(self.ceph_data_storage) * 100
             all_pgs = self.get_deploy_history_pgs() + extend_pg_all
             data = self.calculate_ceph_storage(len(nodes), service_type, ceph_copy_num_default, all_pgs)
-        
+            data['shareSizeMax'] = '0GB'
+
         if local_service_flag:
             local_storage_data = self.calculate_local_storage()
             data['shareSizeMax'] = local_storage_data['share_size_max']
@@ -69,6 +70,7 @@ class ExtendShowRecommendConfig(ExtendReckRecommendConfigCommon, ShowRecommendCo
             all_pgs = self.get_deploy_history_pgs() + extend_pg_all
             data = self.calculate_ceph_storage(
                 1, service_type, ceph_copy_num_default, all_pgs)
+            data['shareSizeMax'] = '0GB'
         
         if local_service_flag:
             local_storage_data = self.calculate_node_local_storage(nodes)
