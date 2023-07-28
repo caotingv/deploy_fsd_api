@@ -47,50 +47,59 @@ class Extension(DeployScript, ExtendPreview):
 
         self._write_history_file(results)
         upgrade_path = self._get_upgrade_path()
-        cmd = ['sh', current_app.config['SCRIPT_PATH'] +
-               '/extension.sh', str(ceph_flag), str(upgrade_path)]
+        cmd = ['sh', 
+               (current_app.config['SCRIPT_PATH'].joinpath('extension.sh')), 
+                str(ceph_flag), 
+                str(upgrade_path)]
         self._logger.info('extension command: %s', cmd)
-        results = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        subprocess_1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         thread = Thread(target=self._shell_return_listen, args=(
-            current_app._get_current_object(), results, previews,
+            current_app._get_current_object(), subprocess_1, previews,
             int(time.time() * 1000)))
         thread.start()
 
     def _shell_return_listen(self, app, subprocess_1, previews, start_time):
+        deploy_preview = self.get_deploy_preview_data()
+
         with app.app_context():
             subprocess_1.wait()
             status = self.deploy_status_model.get_deploy_last_status()
-            if status:
-                deploy_message = status[0]
-                deploy_result = status[1]
+            deploy_message = status[0] if status else 'deploy failed.'
+            deploy_result = status[1].lower() if status else 'false'
+
+            if deploy_result == 'true':
+                params_json = json.dumps(previews)
             else:
-                deploy_message = 'deploy faild.'
-                deploy_result = 'false'
+                params_json = json.dumps(deploy_preview)
+            
+            self._logger.info('params_json is: %s', params_json)
+
+            log_output = str(subprocess_1.stdout.read(), encoding='utf-8')
+            end_time = int(time.time() * 1000)
+
             results = types.DataModel().history_extend_model(
-                params_json=json.dumps(previews),
-                log=str(subprocess_1.stdout.read(), encoding='utf-8'),
+                params_json=params_json,
+                log=log_output,
                 start_time=start_time,
-                endtime=int(time.time() * 1000),
+                endtime=end_time,
                 message=deploy_message,
                 result=deploy_result
             )
 
             self._write_history_file(results)
-            if deploy_result.lower() == 'true':
+
+            if deploy_result == 'true':
                 self.deploy_history_model.update_deploy_history_params(
                     results['paramsJson'])
                 info = self._load_storage()
-                self.load_info_model.add_load_info_with_id(
-                    1, json.dumps(info))
+                self.load_info_model.add_load_info_with_id(1, json.dumps(info))
                 self._write_node_info_csv(previews['nodes'])
                 self.scp_deploy(previews['nodes'])
 
     def _get_upgrade_path(self):
         model = UpgradeHistoryModel()
         update_path = model.get_upgrade_path()
-        if update_path[0]:
-            return update_path[0]
-        return ''
+        return update_path[0] if update_path[0] else ''
 
     def _write_history_file(self, result):
         self.extend_history_model.create_extend_history_table()

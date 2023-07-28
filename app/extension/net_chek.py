@@ -5,7 +5,7 @@ import shutil
 
 from common import types
 from deploy.net_check import NetCheck, NetCheckCommon
-from models.deploy_history import DeployHistoryModel
+from models.extend_history import ExtendHistoryModel
 
 
 class ExtendNetCheck(NetCheck):
@@ -36,30 +36,27 @@ class ExtendNetCheck(NetCheck):
     def get_node_load_card_info(self):
         try:
             cards_list = []
-            card_data = {
-                "cards": [],
-                "nodeIP": "",
-                "nodeName": ""
-            }
+            model = ExtendHistoryModel()
+            history_data = model.get_extend_history()
 
-            model = DeployHistoryModel()
-            history_data = model.get_deploy_history()
-            datas_json = json.loads(history_data[1])
-            for node in datas_json['nodes']:
-                card_data['cards'] = node['networkCards']
-                card_data['nodeIP'] = node['nodeIP']
-                card_data['nodeName'] = node['nodeName']
+            for node in json.loads(history_data[1])['nodes']:
+                card_data = {
+                    "cards": node['networkCards'],
+                    "nodeIP": node['nodeIP'],
+                    "nodeName": node['nodeName']
+                }
                 cards_list.append(card_data)
+
             return cards_list
+
         except Exception as e:
-            self._logger.error(
-                f"Failed to load json ans build cards list file: {e}")
+            error_message = f"Failed to load JSON and build cards list file: {e}"
+            self._logger.error(error_message)
             raise
 
 
 class ExtendNetCheckCommon(ExtendNetCheck, NetCheckCommon):
     def __init__(self):
-        self.deploy_history_model = DeployHistoryModel()
         nodes = self.get_nodes_from_request()
         cards = self.get_cards_from_request()
         extend_nodes = self.get_deploy_cards()
@@ -70,20 +67,20 @@ class ExtendNetCheckCommon(ExtendNetCheck, NetCheckCommon):
     def get_deploy_cards(self):
         try:
             node_card_list = []
-            node_card_data = {
-                "cards": [],
-                "nodeIP": "",
-                "nodeName": ""
-            }
-            history_data = self.deploy_history_model.get_deploy_history()
-            datas_json = json.loads(history_data[1])
-            for node in datas_json['nodes']:
-                node_card_data['cards'] = node['networkCards']
-                node_card_data['nodeIP'] = node['nodeIP']
-                node_card_data['nodeName'] = node['nodeName']
+            model = ExtendHistoryModel()
+            history_data = model.get_extend_history()
+
+            for node in json.loads(history_data[1])['nodes']:
+                node_card_data = {
+                    "cards": node['networkCards'],
+                    "nodeIP": node['nodeIP'],
+                    "nodeName": node['nodeName']
+                }
                 node_card_list.append(node_card_data)
+
             return node_card_list
+
         except Exception as e:
-            self._logger.error(
-                f"Get Deploy History file or Get NETCARD in file is filed, Because: {e}")
+            error_message = f"Get Deploy History file or Get NETCARD in file has failed. Reason: {e}"
+            self._logger.error(error_message)
             raise
