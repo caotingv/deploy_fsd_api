@@ -264,7 +264,7 @@ fsd_biz_parameter_appSize: 1024
 fsd_voi_version: edu
 
 tdesktop_edu_path_name: 
-  - /opt/offline/edu-tdesktop-app-win-x86-64_v3.0.0.n000_20230730-release.exe
+  - /opt/offline/Win-TDesktop.exe
 
 tdesktop_path_name: 
   - /opt/offline/UOS_X86-TDesktop.deb
