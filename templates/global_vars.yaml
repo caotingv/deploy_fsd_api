@@ -263,6 +263,9 @@ fsd_biz_parameter_appSize: 1024
 # 2. common 办公
 fsd_voi_version: edu
 
+tdesktop_edu_path_name: 
+  - /opt/offline/edu-tdesktop-app-win-x86-64_v3.0.0.n000_20230730-release.exe
+
 tdesktop_path_name: 
   - /opt/offline/UOS_X86-TDesktop.deb
   - /opt/offline/Win-TDesktop.exe
