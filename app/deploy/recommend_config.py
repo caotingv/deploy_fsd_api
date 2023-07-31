@@ -196,7 +196,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
         if ceph_service_flag:
             if len(nodes) == 1 and len(self.ceph_data_storage) == 1:
                 ceph_copy_num_default = 1
-            pg_all = len(nodes) * len(self.ceph_data_storage) * 100
+            pg_all = len(self.ceph_data_storage) * 100
             data = self.calculate_ceph_storage(
                 1, service_type, ceph_copy_num_default, pg_all)
             data['shareSizeMax'] = '0GB'
