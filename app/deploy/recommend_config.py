@@ -138,8 +138,8 @@ class ReckRecommendConfigCommon(Resource, DeployCount):
             local_data_sum = self.get_system_disk_free_size()
 
         return {
-            'share_size_max': f'{share_data_sum}GB',
-            'local_size_max': f'{local_data_sum}GB',
+            'share_size_max': f'{round(share_data_sum, 2)}GB',
+            'local_size_max': f'{round(local_data_sum, 2)}GB',
         }
 
     def calculate_memory_free_size(self, total_memory, osd_num):
@@ -225,7 +225,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                     for storage in node['storages']
                     if storage['purpose'] == 'LOCAL_DATA' or storage['purpose'] == 'LOCAL_SHARE_DATA'
                 )
-                local_data_sum.append(f'{local_size}GB')
+                local_data_sum.append(f'{round(local_size, 2)}GB')
         else:
             for node in nodes:
                 local_data_sum.append('0GB')
@@ -237,7 +237,7 @@ class ShowRecommendConfig(ReckRecommendConfigCommon):
                     for storage in node['storages']
                     if storage['purpose'] == 'SHARE_DATA')
 
-                share_data_sum.append(f'{share_size}GB')
+                share_data_sum.append(f'{round(share_size, 2)}GB')
         else:
             for node in nodes:
                 share_data_sum.append('0GB')
