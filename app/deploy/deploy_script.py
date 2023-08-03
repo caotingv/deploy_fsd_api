@@ -165,12 +165,16 @@ class DeployScript(Preview, Node):
     def _storage_purpose_convert(self, purpose):
         if purpose == "SYSTEM":
             return "系统盘"
-        elif purpose == "DATA":
+        elif purpose == "CEPH_DATA":
             return "ceph数据盘"
-        elif purpose == "CACHE":
+        elif purpose == "CEPH_CACHE":
             return "ceph缓存盘"
-        elif purpose == "VOIDATA":
-            return "VOI数据盘"
+        elif purpose == "LOCAL_DATA":
+            return "本地存储数据盘"
+        elif purpose == "SHARE_DATA":
+            return "共享存储数据盘"
+        elif purpose == "LOCAL_SHARE_DATA":
+            return "本地+共享存储数据盘"
 
     def _ssd_bool(self, name, storage_load_dict):
         for node in storage_load_dict:
