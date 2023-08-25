@@ -88,7 +88,7 @@ class UpgradeHistory(Resource, Node):
                 result = types.DataModel().history_upgarde_model(
                     version=data[1],
                     new_version=data[2],
-                    result=data[3].lower() == 'true' if data[3] != '' else '',
+                    result=bool(data[3].lower() == 'true') if data[3] != '' else '',
                     message=data[4],
                     endtime=data[5],
                 )

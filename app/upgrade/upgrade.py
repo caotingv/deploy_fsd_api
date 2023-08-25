@@ -41,6 +41,9 @@ class Upgrade(Resource):
         return parser.parse_args()
 
     def start_upgrade(self, app, filename):
+        self.upgrade_history_model.add_upgrade_history(
+            self.version, self.new_version, '', '', int(time.time() * 1000))
+
         with app.app_context():
             self.unzip_upgade_package(filename)
             self.upgrade_script(filename)
@@ -60,10 +63,8 @@ class Upgrade(Resource):
                 'unzip_upgrade_package',
                 'Failed to unzip upgrade package'
                 'false', 0, '解压升级包')
-            self.upgrade_history_model.add_upgrade_history(
-                self.version, self.new_version, 'false',
-                'Failed to unzip the upgrade package',
-                int(time.time() * 1000))
+            self._update_history_upgrade_file(
+                message="Failed to unzip the upgrade package")
             raise
 
         self._logger.info(
@@ -71,9 +72,6 @@ class Upgrade(Resource):
         self.upgrade_status_model.add_upgrade_now_status(
             'unzip_upgrade_package', '',
             'true', 0, '解压升级包')
-        self.upgrade_history_model.add_upgrade_history(
-            self.version, self.new_version, 'true',
-            '', int(time.time() * 1000))
 
     def upgrade_script(self, filename):
         upgrade_file = os.path.splitext(os.path.splitext(filename)[0])[0]
@@ -111,7 +109,7 @@ class Upgrade(Resource):
             self._update_history_upgrade_file(
                 upgrade_message, upgrade_result, upgrade_path)
 
-    def _update_history_upgrade_file(self, message, result, upgrade_path=''):
+    def _update_history_upgrade_file(self, message='', result='', upgrade_path=''):
         try:
             self.upgrade_history_model.update_upgrade_history(
                 result, message, int(time.time() * 1000), upgrade_path)
