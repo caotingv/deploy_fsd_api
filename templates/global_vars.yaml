@@ -120,8 +120,8 @@ ceph_rbd_secret_uuid: e2338e01-6f82-4236-885b-056847028c77
 ceph_rbd_admin_user: client.admin
 hugepages_size: 2M
 enable_hugepages: "{% if only_deploy_voi | bool %}false{% else %}true{% endif %}"
-libvirt_tag: 3.0.0
-guest_service_tag: 3.0.0
+libvirt_tag: 3.0.2
+guest_service_tag: 3.0.2
 coredump_img_file_path: /opt/coredump
 coredump_libvirt_path: /opt/coredump_file
 coredump_block_size: "{% if enable_single_net | bool %}1024K{% else %}1024M{% endif %}"
@@ -212,7 +212,7 @@ trochilus_internal_agent_listen_port: 19002
 trochilus_base_path: "{{ desktop_mount_dir }}"
 trochilus_voi_base_path: "{{ share_mount_dir }}/voi/"
 trochilus_vdi_base_path: "{{ desktop_mount_dir }}/local_disks/"
-trochilus_tag: 3.0.0
+trochilus_tag: 3.0.2
 virt_v2v_tag: latest
 # 如果vdi盒子和管理网不在同一个网段，就填管理网网关ip。如果vdi盒子和管理网在同一个网段，就啥也不填
 trochilus_detected_mgmt_net_ip: ""
@@ -246,8 +246,9 @@ fsd_console_port: 9040
 fsd_external_main_port: 9010
 fsd_internal_main_port: 19010
 fsd_ssd_port: 22222
+fsd_broadcast_port: 8050
 fsd_webhook_token: abc123
-fsd_default_tag: 3.0.0
+fsd_default_tag: 3.0.2
 fsd_console_tag: latest
 fsd_deploy_mode: all
 fsd_deploy_node_type: '{% if groups["fsd"] | length > 1 %}cluster{% else %}single{% endif %}'
@@ -291,7 +292,7 @@ bt_download_external_port_end: 6889
 bt_download_internal_port_end: 16889
 btserver_external_listen_ports: "{{ bt_download_external_port_start }}-{{ bt_download_external_port_end }}"
 btserver_internal_listen_ports: "{{ bt_download_internal_port_start }}-{{ bt_download_internal_port_end }}"
-btserver_tag: 3.0.0
+btserver_tag: 3.0.2
 
 ###################
 # glusterfs 
